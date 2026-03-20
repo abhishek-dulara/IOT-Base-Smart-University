@@ -1,35 +1,35 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 :root {
-  /* Color System - Dark Theme */
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a1f2e;
-  --bg-card-hover: #222839;
-  --bg-surface: #161b2e;
+  /* Color System - Custom Theme */
+  --bg-primary: #181B20;
+  --bg-secondary: #1B1D21;
+  --bg-card: #1E2025;
+  --bg-card-hover: #434950;
+  --bg-surface: #2B2E35;
 
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #EEEEEE;
+  --text-secondary: #c5c5c5;
+  --text-muted: #8a8f98;
 
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-red: #ef4444;
-  --accent-pink: #ec4899;
+  --accent-blue: #00ADB5;
+  --accent-purple: #00ADB5;
+  --accent-cyan: #00ADB5;
+  --accent-green: #00d4a1;
+  --accent-amber: #f5b731;
+  --accent-red: #ef5350;
+  --accent-pink: #00ADB5;
 
-  --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-warning: linear-gradient(135deg, #f59e0b, #ef4444);
-  --gradient-info: linear-gradient(135deg, #06b6d4, #3b82f6);
+  --gradient-primary: linear-gradient(135deg, #00ADB5, #008c93);
+  --gradient-success: linear-gradient(135deg, #00d4a1, #00ADB5);
+  --gradient-warning: linear-gradient(135deg, #f5b731, #ef5350);
+  --gradient-info: linear-gradient(135deg, #00ADB5, #008c93);
 
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border-color: #48505B;
+  --border-hover: #5a6370;
 
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(0, 173, 181, 0.2);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -141,12 +141,12 @@ a {
 }
 
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 173, 181, 0.08);
   color: var(--text-primary);
 }
 
 .sidebar-link.active {
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(0, 173, 181, 0.15);
   color: var(--accent-blue);
 }
 
@@ -267,7 +267,7 @@ a {
 }
 
 .stat-card-icon.blue {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(0, 173, 181, 0.15);
   color: var(--accent-blue);
 }
 
@@ -287,7 +287,7 @@ a {
 }
 
 .stat-card-icon.purple {
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(0, 173, 181, 0.15);
   color: var(--accent-purple);
 }
 
@@ -359,7 +359,7 @@ tr:last-child td {
 }
 
 tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(0, 173, 181, 0.04);
 }
 
 /* ─── Badges ─── */
@@ -389,12 +389,12 @@ tr:hover td {
 }
 
 .badge.blue {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(0, 173, 181, 0.15);
   color: var(--accent-blue);
 }
 
 .badge.purple {
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(0, 173, 181, 0.15);
   color: var(--accent-purple);
 }
 
@@ -437,7 +437,7 @@ tr:hover td {
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 173, 181, 0.08);
   color: var(--text-primary);
 }
 
@@ -483,7 +483,7 @@ tr:hover td {
 
 .form-input:focus {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.15);
 }
 
 .form-input::placeholder {
@@ -506,7 +506,7 @@ tr:hover td {
   position: absolute;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.08), transparent 70%);
+  background: radial-gradient(circle, rgba(0, 173, 181, 0.1), transparent 70%);
   top: -100px;
   right: -100px;
   pointer-events: none;
@@ -519,7 +519,7 @@ tr:hover td {
   height: 500px;
   background: radial-gradient(
     circle,
-    rgba(139, 92, 246, 0.06),
+    rgba(0, 173, 181, 0.06),
     transparent 70%
   );
   bottom: -100px;
