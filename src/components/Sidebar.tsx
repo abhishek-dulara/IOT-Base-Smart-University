@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -10,11 +11,27 @@ const navItems = [
   { href: "/alerts", label: "Alerts", icon: "🔔" },
   { href: "/analytics", label: "Analytics", icon: "📈" },
   { href: "/reports", label: "Reports", icon: "📄" },
+  { href: "/users", label: "User Management", icon: "👥", superAdminOnly: true },
   { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setRole(user.role);
+      } catch (e) {}
+    }
+  }, []);
+
+  const filteredNav = navItems.filter((item) => 
+    !("superAdminOnly" in item) || (item as any).superAdminOnly === false || role === "SUPER_ADMIN"
+  );
 
   return (
     <aside className="sidebar">
@@ -26,7 +43,7 @@ export default function Sidebar() {
       <div className="sidebar-section-label">Main Menu</div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => (
+        {filteredNav.map((item) => (
           <Link
             key={item.href}
             href={item.href}

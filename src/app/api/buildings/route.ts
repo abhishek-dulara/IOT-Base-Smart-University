@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getBuildings, createBuilding } from "@/lib/services/buildings";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const buildings = await getBuildings();

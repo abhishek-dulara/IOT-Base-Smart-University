@@ -50,6 +50,8 @@ export async function updateRoom(
     name?: string;
     code?: string;
     type?: string;
+    building_id?: string;
+    floor_id?: string | null;
     is_public_destination?: boolean;
   }
 ) {

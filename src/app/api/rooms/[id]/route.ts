@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRoomById, updateRoom, deleteRoom } from "@/lib/services/rooms";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }

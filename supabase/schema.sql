@@ -150,9 +150,9 @@ CREATE INDEX idx_room_status_updated ON room_status(updated_at DESC);
 CREATE INDEX idx_anomalies_active ON anomalies(is_active);
 
 
-
-
-
+-- =========================
+-- Row Level Security (RLS)
+-- =========================
 
 -- Enable Row Level Security (RLS) on all tables to lock them down.
 -- Since your Next.js project uses the SUPABASE_SERVICE_ROLE_KEY on the backend, 
@@ -174,3 +174,51 @@ ALTER TABLE anomalies ENABLE ROW LEVEL SECURITY;
 -- If you DO want the frontend (React/Next.js client) to read certain tables directly, 
 -- you would add a policy like this to only allow reading:
 -- CREATE POLICY "Allow public read-only access to buildings" ON buildings FOR SELECT USING (true);
+
+-- ========================================
+-- Buildings <- Floors & Rooms 
+-- ========================================
+
+-- =========================
+-- 1. CREATE FLOORS TABLE
+-- =========================
+CREATE TABLE IF NOT EXISTS floors (
+  floor_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  building_id UUID REFERENCES buildings(building_id) ON DELETE CASCADE,
+  level INT,
+  name TEXT,
+  map_image_url TEXT,
+  px_per_meter FLOAT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- =========================
+-- 2. CREATE ROOMS TABLE
+-- =========================
+CREATE TABLE IF NOT EXISTS rooms (
+  room_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  building_id UUID REFERENCES buildings(building_id) ON DELETE CASCADE,
+  floor_id UUID REFERENCES floors(floor_id) ON DELETE CASCADE,
+  name TEXT,
+  code TEXT,
+  type TEXT CHECK (type IN ('HALL','LAB','OFFICE')),
+  is_public_destination BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ===================================
+-- 3. ENABLE ROW LEVEL SECURITY (RLS)
+-- ===================================
+ALTER TABLE floors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+
+-- ========================================
+-- 4. ADD NEW COLUMNS TO BUILDINGS TABLE
+-- ========================================
+-- (Running this again is safe. It will add them if they don't exist yet)
+ALTER TABLE public.buildings
+ADD COLUMN IF NOT EXISTS number_of_floors INT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS number_of_rooms INT DEFAULT 0;
+
+
+
