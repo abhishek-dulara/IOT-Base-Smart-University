@@ -316,6 +316,13 @@ export default function RoomsPage() {
                   </td>
                   <td style={{ padding: '16px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                     <button 
+                      onClick={() => router.push(`/rooms/${room.room_id}`)}
+                      className="action-btn view-btn"
+                      title="View Details"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <button 
                       onClick={() => openEditModal(room)}
                       className="action-btn edit-btn"
                       title="Edit"

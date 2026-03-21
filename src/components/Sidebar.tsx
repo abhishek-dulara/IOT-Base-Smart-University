@@ -18,6 +18,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -27,20 +28,53 @@ export default function Sidebar() {
         setRole(user.role);
       } catch (e) {}
     }
+    // Restore collapsed state
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") setCollapsed(true);
   }, []);
+
+  const toggleCollapse = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem("sidebar-collapsed", String(next));
+    // Dispatch event so layout can react
+    window.dispatchEvent(new CustomEvent("sidebar-toggle", { detail: next }));
+  };
 
   const filteredNav = navItems.filter((item) => 
     !("superAdminOnly" in item) || (item as any).superAdminOnly === false || role === "SUPER_ADMIN"
   );
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
+      {/* Collapse/Expand Toggle — on the sidebar border line */}
+      <button
+        className="sidebar-toggle-btn"
+        onClick={toggleCollapse}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: collapsed ? "rotate(0deg)" : "rotate(180deg)", transition: "transform 0.3s ease" }}
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">N</div>
-        <h1>NavSense</h1>
+        {!collapsed && <h1>NavSens</h1>}
       </div>
 
-      <div className="sidebar-section-label">Main Menu</div>
+      {!collapsed && <div className="sidebar-section-label">Main Menu</div>}
 
       <nav className="sidebar-nav">
         {filteredNav.map((item) => (
@@ -50,21 +84,13 @@ export default function Sidebar() {
             className={`sidebar-link ${
               pathname.startsWith(item.href) ? "active" : ""
             }`}
+            title={collapsed ? item.label : undefined}
           >
             <span className="sidebar-link-icon">{item.icon}</span>
-            {item.label}
+            {!collapsed && item.label}
           </Link>
         ))}
       </nav>
-
-      <div className="sidebar-section-label">System</div>
-      <div className="sidebar-link" style={{ cursor: "default" }}>
-        <span className="sidebar-link-icon">⚡</span>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-          Realtime Active
-        </span>
-        <span className="live-dot" style={{ marginLeft: "auto" }} />
-      </div>
     </aside>
   );
 }
