@@ -14,7 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      {/* This tells Next.js to safely ignore any minor attribute changes done to the body tag by browser extensions */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

@@ -1,178 +1,315 @@
-# NavSense — Smart Building Management System
+<div align="center">
 
-A production-ready, full-stack IoT Smart University management dashboard built natively with Next.js 16 (App Router), React 19, TypeScript, Advanced Custom CSS, and Supabase. 
+<br/>
 
-## 🚀 Features
+```
+███╗   ██╗ █████╗ ██╗   ██╗███████╗███████╗███╗   ██╗███████╗███████╗
+████╗  ██║██╔══██╗██║   ██║██╔════╝██╔════╝████╗  ██║██╔════╝██╔════╝
+██╔██╗ ██║███████║██║   ██║███████╗█████╗  ██╔██╗ ██║███████╗█████╗  
+██║╚██╗██║██╔══██║╚██╗ ██╔╝╚════██║██╔══╝  ██║╚██╗██║╚════██║██╔══╝  
+██║ ╚████║██║  ██║ ╚████╔╝ ███████║███████╗██║ ╚████║███████║███████╗
+╚═╝  ╚═══╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝╚══════╝
+```
 
-- **Real-Time IoT Monitoring** — Live sensor data (temperature, sound, light, motion) streaming directly from edge functions.
-- **Smart Occupancy Tracking** — Room-level occupancy tracking with trends and historical analytics.
-- **Environmental Analytics** — Deep insights into building environments affecting comfort and power usage.
-- **Automated Alerting** — Configurable system anomalies (Ghost Cooling, Extreme Temps) with severity-based notifications.
-- **Multi-Building Management** — Complete CRUD operations to scale across complex university campuses.
-- **Role-Based Access Control** — Built-in Super Admin and Admin role infrastructure with stateless JWT protection.
-- **Report Generation** — Comprehensive, downloadable timeline metrics.
-- **Striking UI/UX Design** — Custom glassmorphism components, 3D CSS flip animations, and glowing interactive hover states.
+### Smart Building Management System
 
-## 🛠️ Tech Stack
+**Real-time IoT monitoring, occupancy tracking, and environmental analytics  
+for modern university campuses.**
 
-Because this project is exceptionally customized for high performance, it utilizes modern web standards:
+<br/>
 
-| Technology | Purpose |
-|---|---|
-| Next.js (App Router) | Full-stack React framework (Frontend + APIs) |
-| React 19 + TypeScript | UI Library and strict type-safety |
-| Standard CSS (Globals) | 3D animations, gradients, and glassmorphism (No Tailwind dependencies needed) |
-| Supabase | PostgreSQL Database, Edge Functions, Realtime APIs |
-| Bcryptjs + JWT | Custom highly-secure stateless authentication |
-| Recharts | Dynamic sensor data visualizations |
-| Deno | Serverless Edge Function IoT Simulator execution |
+[![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Deno](https://img.shields.io/badge/Deno-000000?style=for-the-badge&logo=deno&logoColor=white)](https://deno.land/)
 
-## 🛠️ Technologies Used
+<br/>
 
-### Frontend
-- **Next.js 16 (App Router)**: React framework for building server-rendered and statically generated applications.
-- **React 19**: Modern UI library for composable components.
-- **Tailwind CSS**: Utility-first CSS framework for rapid UI styling.
-- **Lucide React / Recharts**: Beautiful icons and dynamic data visualizations.
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+![Node](https://img.shields.io/badge/node-v18+-green?style=flat-square)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
-### Backend & Database
-- **Supabase**: Open-source Firebase alternative serving as the Postgres database, Auth provider, and real-time subscription engine.
-- **Next.js API Routes**: Serverless functions acting as the intermediate backend layer.
-- **Deno Edge Functions**: Used natively in Supabase to run serverless micro-scripts (e.g., simulating sensor data inputs).
-
-### Authentication & Security
-- **JWT (JSON Web Tokens)** & **Bcrypt.js**: Custom implementation of stateless tokens and password hashing for user management.
+</div>
 
 ---
 
-## 📂 File Structure
+## Overview
 
-The project relies on a modular separation of concerns following standard Next.js conventions:
+NavSense is a production-ready, full-stack IoT Smart University Management dashboard. It streams live sensor data from physical hardware (ESP32) directly into a polished, real-time web interface — giving facility managers a complete picture of building occupancy, environmental conditions, and system anomalies across an entire campus.
 
-```text
+Built natively on the **Next.js 16 App Router**, **React 19**, and **Supabase**, NavSense is engineered for performance, security, and scale.
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 📡 **Real-Time IoT Monitoring** | Live sensor data streams (temperature, sound, light, motion) powered by Supabase Edge Functions |
+| 🏢 **Smart Occupancy Tracking** | Room-level occupancy with trend analysis and historical timelines |
+| 🌡️ **Environmental Analytics** | Deep insights into building environments affecting comfort and energy usage |
+| 🚨 **Automated Alerting** | Configurable anomaly detection (Ghost Cooling, Extreme Temps) with severity-based notifications |
+| 🏛️ **Multi-Building Management** | Full CRUD operations designed to scale across complex university campuses |
+| 🔐 **Role-Based Access Control** | Super Admin and Admin roles with stateless JWT authentication |
+| 📊 **Report Generation** | Comprehensive, downloadable timeline metric exports |
+| 🎨 **Striking UI/UX** | Custom glassmorphism components, 3D CSS flip animations, and glowing interactive states |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Framework** | Next.js 16 (App Router) | Full-stack React framework — Frontend + API Routes |
+| **UI** | React 19 + TypeScript | Composable components with strict type safety |
+| **Styling** | Standard CSS (Globals) | 3D animations, gradients, glassmorphism — no Tailwind needed |
+| **Database** | Supabase (PostgreSQL) | Primary data store, Realtime APIs, Row-Level Security |
+| **Edge Functions** | Deno (via Supabase) | Serverless IoT simulator and sensor data ingestion |
+| **Auth** | Bcrypt.js + JWT | Custom stateless authentication and password hashing |
+| **Charts** | Recharts | Dynamic, animated sensor data visualizations |
+
+---
+
+## 📂 Project Structure
+
+```
 📦 IOT-Base-Smart-University
- ┣ 📂 public/              # Static assets (images, fonts)
+ ┣ 📂 public/                   # Static assets (images, fonts)
  ┣ 📂 src/
- ┃ ┣ 📂 app/               # Next.js App Router (Pages & Layouts)
- ┃ ┃ ┣ 📂 (dashboard)/     # Main authenticated app interface routes
- ┃ ┃ ┣ 📂 api/             # Next.js API Routes (Backend layer)
- ┃ ┃ ┣ 📂 login/           # Authentication page
- ┃ ┃ ┣ 📜 layout.tsx       # Root layout file
- ┃ ┃ ┗ 📜 page.tsx         # Landing entry point
- ┃ ┣ 📂 components/        # Reusable React components (UI elements, charts)
- ┃ ┣ 📂 hooks/             # Custom React hooks
- ┃ ┗ 📂 lib/               # Utility functions and services
- ┃   ┗ 📂 services/        # Supabase DB wrapper logic (users, rooms, sensors)
- ┣ 📂 supabase/            # Supabase Configurations
- ┃ ┗ 📂 functions/         # Deno Edge Functions (e.g., IoT data simulator)
- ┣ 📜 .env.local           # Environment variables (Ignored by Git)
- ┣ 📜 package.json         # Project dependencies and scripts
- ┗ 📜 tailwind.config.ts   # Tailwind CSS configuration rules
+ ┃ ┣ 📂 app/                    # Next.js App Router
+ ┃ ┃ ┣ 📂 (dashboard)/          # Authenticated app interface routes
+ ┃ ┃ ┣ 📂 api/                  # Next.js API Route Handlers (backend layer)
+ ┃ ┃ ┣ 📂 login/                # Authentication page (3D flip card UI)
+ ┃ ┃ ┣ 📜 layout.tsx            # Root layout
+ ┃ ┃ ┗ 📜 page.tsx              # Landing entry point
+ ┃ ┣ 📂 components/             # Reusable React UI components & charts
+ ┃ ┣ 📂 hooks/                  # Custom React hooks
+ ┃ ┗ 📂 lib/
+ ┃   ┗ 📂 services/             # Supabase DB wrappers (users, rooms, sensors)
+ ┣ 📂 supabase/
+ ┃ ┣ 📂 functions/              # Deno Edge Functions (IoT data simulator)
+ ┃ ┣ 📜 schema.sql              # Full database schema with relationships
+ ┃ ┗ 📜 rls_security.sql        # Row-Level Security policies
+ ┣ 📜 .env.local                # Environment variables (git-ignored)
+ ┣ 📜 package.json
+ ┗ 📜 tailwind.config.ts
 ```
 
 ---
 
-## 🗄️ Database Structure
+## 🗄️ Database Schema
 
-The project uses a relational **PostgreSQL** database managed by Supabase. Here are the core tables and their purpose:
+NavSense uses a relational **PostgreSQL** database managed by Supabase with the following core tables:
 
-1. **`users`**: Securely holds administrator/staff credentials and roles.
-2. **`buildings`**: Represents physical campus structures.
-3. **`rooms`**: Specific rooms within the buildings.
-4. **`room_status`**: Live availability or tracking status of a room (e.g., reserved, free).
-5. **`sensor_nodes`**: Physical hardware devices (ESP32/Raspberry Pi) installed in the campus. Acts as the source of live metrics.
-6. **`readings`**: Time-series log of all data emitted by sensors (Temp, Lux, Noise DB, Motion).
-7. **`anomalies`**: System-generated alerts indicating unusual parameters (e.g., HVAC cooling an empty room).
+```
+users          → Admin credentials, roles, and profiles
+buildings      → Physical campus structures
+rooms          → Specific rooms within each building
+room_status    → Live availability tracking (reserved, free, etc.)
+sensor_nodes   → Physical hardware devices (ESP32 / Raspberry Pi) per room
+readings       → Time-series log of all sensor emissions (Temp, Lux, Noise dB, Motion)
+anomalies      → System-generated alerts for unusual conditions (e.g., Ghost Cooling)
+```
 
 ---
 
 ## ⚙️ Backend Architecture
 
-The backend operates on a 3-tier architecture:
-1. **Client API Calls**: Frontend components query `src/app/api/` via HTTP requests.
-2. **Next.js Route Handlers**: Files inside `src/app/api/.../route.ts` authorize requests via JWT, process logic, and communicate with the Supabase Database using the `@supabase/supabase-js` client wrapper in `src/lib/services`.
-3. **Supabase Database & Real-Time**: Safely handles the transactions and emits changes to subscribed clients if needed. 
-*(Sensor data flows directly into Supabase via edge functions or external hardware hooks).*
+NavSense runs on a clean **3-tier architecture**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. CLIENT                                                       │
+│     React components → HTTP fetch → /api/* routes               │
+├─────────────────────────────────────────────────────────────────┤
+│  2. NEXT.JS API LAYER (route.ts handlers)                        │
+│     JWT verification → Business logic → Supabase JS client      │
+├─────────────────────────────────────────────────────────────────┤
+│  3. SUPABASE                                                     │
+│     PostgreSQL transactions → Realtime subscriptions → Clients  │
+│     ↑                                                            │
+│     ESP32 hardware / Deno edge functions (sensor ingestion)      │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 📦 Setup
+## 📄 Pages & Routes
 
-### 1. Install dependencies
-Ensure you are using Node.js v18+.
+| Page | Route | Description |
+|---|---|---|
+| Login | `/login` | 3D flip-card authentication interface |
+| Dashboard | `/dashboard` | System overview, ambient KPIs, fast metrics |
+| Buildings | `/buildings` | Building & infrastructure CRUD |
+| Rooms | `/rooms` | Room definitions and sensor node mapping |
+| Alerts | `/alerts` | Severity-based anomaly investigation log |
+| Analytics | `/analytics` | Interactive charts and sensor trend histories |
+| Reports | `/reports` | Data generation and export tools |
+| Settings | `/settings` | System configuration and profile management |
+
+> All authenticated routes are protected by a layout-level server session verifier.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** v18 or higher
+- A **Supabase** project ([create one free](https://supabase.com))
+
+### 1. Clone & Install
+
 ```bash
+git clone https://github.com/your-username/IOT-Base-Smart-University.git
+cd IOT-Base-Smart-University
 npm install
 ```
 
 ### 2. Configure Environment
-Create a `.env.local` file in your root folder and add your specific Supabase parameters:
+
+Create a `.env.local` file in the project root:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-never-share-this
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=super_secret_navsense_smart_university_key_2026_xyz
 ```
 
-### 3. Initialize the Database Schema
-A highly-optimized database setup file has mapped all relationships correctly.
-1. Open your Supabase Dashboard -> SQL Editor.
-2. Copy all code from `supabase/schema.sql` and run it.
-3. Once successful, copy and run `supabase/rls_security.sql` to lock your tables securely from the public internet.
+> ⚠️ **Never commit `.env.local` or expose your `SUPABASE_SERVICE_ROLE_KEY` publicly.**
 
-### 4. Start Development Server
+### 3. Initialize the Database
+
+1. Open your **Supabase Dashboard → SQL Editor**
+2. Copy and run `supabase/schema.sql` to create all tables and relationships
+3. Copy and run `supabase/rls_security.sql` to enable Row-Level Security policies
+
+### 4. Create Demo Users
+
+Because NavSense uses Bcrypt hashing, accounts must be created via the API. Start the dev server first, then run:
+
+**macOS / Linux:**
 ```bash
-npm run dev
-```
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"super@navsense.io","password":"SuperAdmin123!","name":"Super Admin","role":"SUPER_ADMIN"}'
 
-### 5. Automatically Create Demo Users
-Because the system employs strict Bcrypt hashing, the best way to create a user is through the live API. Open a new terminal and run these commands to create your Admin accounts:
-
-**Mac/Linux (cURL):**
-```bash
-curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"super@navsense.io\",\"password\":\"SuperAdmin123!\",\"name\":\"Super Admin\",\"role\":\"SUPER_ADMIN\"}"
-
-curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d "{\"email\":\"admin@navsense.io\",\"password\":\"Admin1234!\",\"name\":\"Admin\",\"role\":\"ADMIN\"}"
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@navsense.io","password":"Admin1234!","name":"Admin","role":"ADMIN"}'
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post -ContentType "application/json" -Body '{"email":"super@navsense.io","password":"SuperAdmin123!","name":"Super Admin","role":"SUPER_ADMIN"}'
+Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post `
+  -ContentType "application/json" `
+  -Body '{"email":"super@navsense.io","password":"SuperAdmin123!","name":"Super Admin","role":"SUPER_ADMIN"}'
 
-Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post -ContentType "application/json" -Body '{"email":"admin@navsense.io","password":"Admin1234!","name":"Admin","role":"ADMIN"}'
+Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@navsense.io","password":"Admin1234!","name":"Admin","role":"ADMIN"}'
 ```
+
+### 5. Start the Development Server
+
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
 
 ## 🔐 Demo Credentials
 
 | Role | Email | Password |
 |---|---|---|
-| Super Admin | super@navsense.io | SuperAdmin123! |
-| Admin | admin@navsense.io | Admin1234! |
+| Super Admin | `super@navsense.io` | `SuperAdmin123!` |
+| Admin | `admin@navsense.io` | `Admin1234!` |
 
-## 📄 Pages (App Router Routes)
+---
 
-| Page | Route | Description |
+## 🔌 ESP32 Hardware Integration
+
+NavSense is designed to work with physical ESP32 sensor nodes out of the box.
+
+### Configuration (`esp32.ino`)
+
+Before flashing, update these three values in your Arduino sketch:
+
+```cpp
+// 1. Room ID — must match the ID in your Supabase `rooms` table
+#define TARGET_ROOM_ID "your-room-id-here"
+
+// 2. Wi-Fi credentials for the room's network
+#define WIFI_SSID     "your-network-name"
+#define WIFI_PASSWORD "your-network-password"
+
+// 3. Your computer's local IP running the Next.js server
+#define NEXTJS_SERVER_URL "http://<YOUR_COMPUTER_IP>:3000/api/sensor_readings"
+```
+
+### Finding Your Room ID
+
+**Option A — From the Dashboard URL:**
+1. Navigate to **Rooms** in the NavSense dashboard
+2. Click on a room to open its detail page
+3. Copy the UUID from the browser's address bar:
+   ```
+   123e4567-e89b-12d3-a456-426614174000
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        This is your Room ID
+   ```
+
+**Option B — From Supabase:**
+1. Open **Supabase Dashboard → Table Editor → rooms**
+2. Copy the value from the `id` column for your target room
+
+### Starting the Server for ESP32 Access
+
+Instead of the default `npm run dev`, bind Next.js to your Wi-Fi interface so the ESP32 can reach it:
+
+```bash
+npx next dev -H 0.0.0.0
+```
+
+### Windows Firewall (if ESP32 cannot connect)
+
+By default, Windows blocks external devices from reaching local ports over Wi-Fi. To fix this:
+
+1. Open **Windows Defender Firewall → Advanced Settings**
+2. Click **Inbound Rules → New Rule...**
+3. Select **Port → TCP → Specific local ports:** `3000`
+4. Select **Allow the connection**
+5. Name it `Next.js Port 3000` and click **Finish**
+6. Restart your ESP32 (press **EN** or replug it)
+
+---
+
+## 🎨 Design System
+
+NavSense uses a bespoke dark-theme CSS variable system for visual consistency across all components:
+
+| Token | Hex | Usage |
 |---|---|---|
-| Login | `/login` | High-fidelity 3D Flip Card Authentication Interface |
-| Dashboard | `/dashboard` | System overview, ambient KPIs, fast metrics |
-| Buildings | `/buildings` | Building and infrastructure structural CRUD |
-| Rooms | `/rooms` | Precise room definitions and node mapping |
-| Alerts | `/alerts` | Severity-based historical anomaly investigation |
-| Analytics | `/analytics` | Interactive charts, sensor trends and histories |
-| Reports | `/reports` | Data generation and exportation tools |
-| Settings | `/settings` | Global system configurations and profile bounds |
+| `--bg-primary` | `#0a0e1a` | App layout base — deepest background layer |
+| `--bg-secondary` | `#111827` | Sidebar, navigation menus |
+| `--bg-card` | `#1a1f2e` | Dashboard cards, tables, glassmorphism surfaces |
+| `--accent-blue` | `#3b82f6` | Primary buttons, gradients, glowing borders |
+| `--accent-cyan` | `#06b6d4` | Secondary highlights, micro-animations |
+| `--text-primary` | `#f1f5f9` | Primary readable typography |
+| `--text-muted` | `#64748b` | Data labels, empty states, system text |
 
-*(Note: Authenticated routes are securely wrapped by a layout-level server session verifier).*
+---
 
-## 🎨 Color Palette
+## 🤝 Contributing
 
-We utilize a bespoke dark-themed CSS variable structure for extreme consistency:
+Contributions are welcome! Please open an issue first to discuss what you'd like to change. Pull requests should target the `main` branch with a clear description of your changes.
 
-| Token (CSS Var) | Hex | Usage |
-|---|---|---|
-| `--bg-primary` | `#0a0e1a` | Absolute darkest — App layout base, pure backgrounds |
-| `--bg-secondary` | `#111827` | Mid-dark — Sidebar, isolated navigation menus |
-| `--bg-card` | `#1a1f2e` | Interactive — Dash cards, tables, frosted glassmorphism |
-| `--accent-blue` | `#3b82f6` | High contrast — Primary buttons, gradients, glowing borders |
-| `--accent-cyan` | `#06b6d4` | Highlight contrast — Secondary gradients, micro-animations |
-| `--text-primary` | `#f1f5f9` | White offset — Primary readable typography |
-| `--text-muted` | `#64748b` | Greyscale — Data-labels, empty states, system text |
+---
+
+<div align="center">
+  <sub>Built with ⚡ by the NavSense team — powering smarter campuses.</sub>
+</div>

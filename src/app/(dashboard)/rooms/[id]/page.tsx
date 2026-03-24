@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import IoTDashboard from "@/components/IoTDashboard";
 
 interface RoomDetails {
   room_id: string;
@@ -122,84 +123,7 @@ export default function RoomDetailsPage({
         Environment & System Status
       </h3>
       
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-        {/* Occupancy Card */}
-        <div className="card animate-in" style={{ padding: 24, display: "flex", flexDirection: "column", animationDelay: "0.05s" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(59, 130, 246, 0.1)", color: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-              👥
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", fontWeight: 500 }}>Room Occupancy</h4>
-            </div>
-          </div>
-          <div style={{ marginTop: "auto" }}>
-            {status?.occupancy === "OCCUPIED" ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--accent-green)", fontSize: 24, fontWeight: 600 }}>
-                <span className="badge-dot" style={{ width: 12, height: 12, background: "var(--accent-green)" }} />
-                Occupied
-              </div>
-            ) : status?.occupancy === "VACANT" ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)", fontSize: 24, fontWeight: 600 }}>
-                <span className="badge-dot" style={{ width: 12, height: 12, background: "var(--text-muted)" }} />
-                Vacant
-              </div>
-            ) : (
-              <div style={{ fontSize: 24, fontWeight: 600, color: "var(--text-secondary)" }}>Data Unavailable</div>
-            )}
-          </div>
-        </div>
-
-        {/* Temperature Card */}
-        <div className="card animate-in" style={{ padding: 24, display: "flex", flexDirection: "column", animationDelay: "0.1s" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(245, 158, 11, 0.1)", color: "var(--accent-amber)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-              🌡️
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", fontWeight: 500 }}>Temperature</h4>
-            </div>
-          </div>
-          <div style={{ marginTop: "auto" }}>
-            <div style={{ fontSize: 36, fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "baseline", gap: 4 }}>
-              {status?.temperature_c != null ? status.temperature_c.toFixed(1) : "—"}
-              <span style={{ fontSize: 18, color: "var(--text-muted)", fontWeight: 500 }}>°C</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Ghost Cooling Card */}
-        <div className="card animate-in" style={{ padding: 24, display: "flex", flexDirection: "column", animationDelay: "0.15s" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-              ❄️
-            </div>
-            <div>
-              <h4 style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", fontWeight: 500 }}>HVAC Ghost Cooling</h4>
-            </div>
-          </div>
-          <div style={{ marginTop: "auto" }}>
-            {status?.ghost_cooling_active ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span className="badge amber" style={{ fontSize: 14, padding: "6px 12px" }}>
-                  <span className="badge-dot" /> Warning: Active
-                </span>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-muted)" }}>
-                <span className="badge neutral" style={{ fontSize: 14, padding: "6px 12px" }}>
-                  Inactive
-                </span>
-              </div>
-            )}
-            <p style={{ margin: "12px 0 0 0", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>
-              {status?.ghost_cooling_active 
-                ? "Cooling is active while the room is vacant, indicating potential energy waste."
-                : "Cooling system is operating normally based on occupancy."}
-            </p>
-          </div>
-        </div>
-      </div>
+      <IoTDashboard roomId={id} />
     </div>
   );
 }

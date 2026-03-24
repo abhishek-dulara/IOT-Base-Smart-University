@@ -4,8 +4,8 @@ import type { NextRequest } from "next/server";
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow auth routes without token
-  if (pathname.startsWith("/api/auth")) {
+  // Allow auth routes and sensor readings without token
+  if (pathname.startsWith("/api/auth") || pathname.startsWith("/api/sensor_readings")) {
     return NextResponse.next();
   }
 
