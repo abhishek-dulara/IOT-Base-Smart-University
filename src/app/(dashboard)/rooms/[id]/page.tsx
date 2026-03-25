@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import IoTDashboard from "@/components/IoTDashboard";
 
 interface RoomDetails {
@@ -17,12 +16,6 @@ interface RoomDetails {
   floor?: { name: string; level: number };
 }
 
-interface RoomStatus {
-  occupancy: string | null;
-  temperature_c: number | null;
-  ghost_cooling_active: boolean | null;
-}
-
 export default function RoomDetailsPage({
   params,
 }: {
@@ -32,7 +25,6 @@ export default function RoomDetailsPage({
   const { id } = use(params);
 
   const [room, setRoom] = useState<RoomDetails | null>(null);
-  const [status, setStatus] = useState<RoomStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,19 +33,9 @@ export default function RoomDetailsPage({
       const token = localStorage.getItem("token");
       const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
 
-      // Fetch base room details
       const roomRes = await fetch(`/api/rooms/${id}`, { headers, cache: "no-store" });
       if (!roomRes.ok) throw new Error("Failed to fetch room details");
       const roomData = await roomRes.json();
-
-      // Fetch room status
-      const statusRes = await fetch(`/api/rooms/${id}/status`, { headers, cache: "no-store" });
-      if (statusRes.ok) {
-        const statusData = await statusRes.json();
-        setStatus(statusData);
-      } else {
-        setStatus({ occupancy: null, temperature_c: null, ghost_cooling_active: null });
-      }
 
       setRoom(roomData);
     } catch (err: any) {
@@ -66,9 +48,6 @@ export default function RoomDetailsPage({
 
   useEffect(() => {
     fetchRoomData();
-    // Auto-refresh environment data every 30 seconds
-    const interval = setInterval(fetchRoomData, 30000);
-    return () => clearInterval(interval);
   }, [fetchRoomData]);
 
   if (loading) {
@@ -93,17 +72,13 @@ export default function RoomDetailsPage({
 
   return (
     <div className="room-details-page">
-      <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-        <button 
-          className="btn btn-ghost" 
-          onClick={() => router.push("/rooms")}
-          style={{ padding: "8px", marginTop: "2px" }}
-          title="Back to Rooms"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      {/* Header */}
+      <div className="page-header" style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+        <button className="btn btn-ghost" onClick={() => router.push("/rooms")} style={{ padding: 8, marginTop: 2 }} title="Back to Rooms">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
             <h2 style={{ margin: 0 }}>{room.name || "Unnamed Room"}</h2>
             <span className="badge blue">{room.type}</span>
           </div>
@@ -113,16 +88,13 @@ export default function RoomDetailsPage({
             {room.floor ? ` • ${room.floor.name} (Lvl ${room.floor.level})` : ""}
           </p>
         </div>
-        <button className="btn btn-outline" onClick={fetchRoomData}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          Refresh Data
-        </button>
       </div>
 
+      {/* Unified IoT Dashboard — realtime sensor data */}
       <h3 style={{ fontSize: 18, fontWeight: 600, marginTop: 32, marginBottom: 16, color: "var(--text-primary)" }}>
-        Environment & System Status
+        Environment &amp; System Status
       </h3>
-      
+
       <IoTDashboard roomId={id} />
     </div>
   );

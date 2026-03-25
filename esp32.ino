@@ -6,14 +6,15 @@
 #include <ArduinoJson.h>
 
 // --- Network & Server Config ---
-#define WIFI_SSID "vivo Y03"
-#define WIFI_PASSWORD "11111111"
+#define WIFI_SSID "Hostel_WiFi"
+#define WIFI_PASSWORD "wifi@HostRUSL"
 
 // IMPORTANT: Replace this IP with the local IP of your computer running Next.js
-#define NEXTJS_SERVER_URL "http://<YOUR_COMPUTER_IP_ADDRESS>:3000/api/sensor_readings" 
+#define NEXTJS_SERVER_URL "http://10.30.10.37:3000/api/sensor_readings" 
+
 
 // IMPORTANT: The target room in Supabase this data belongs to
-#define TARGET_ROOM_ID "123e4567-e89b-12d3-a456-426614174000"
+#define TARGET_ROOM_ID "391cffab-41d9-4519-abc0-1cbc66483e0b"
 
 // --- Pin Definitions ---
 #define DHTPIN 14 
@@ -27,7 +28,20 @@ DHT dht(DHTPIN, DHTTYPE);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 19800); 
 
-unsigned long lastUpdateMillis = 0;
+// --- Continuous Tracking Variables ---
+unsigned long lastNetworkPushMillis = 0;
+const unsigned long PUSH_INTERVAL = 3000; // Send data every 3 seconds
+
+unsigned int currentSignalMax = 0;
+unsigned int currentSignalMin = 4095;
+float maxDbSinceLastPush = 40.0;
+bool motionDetectedSinceLastPush = false;
+unsigned long lastSoundCalcMillis = 0;
+
+// --- Hold Timer Variables ---
+unsigned long lastOccupancyTime = 0;
+bool hasStartedOccupancy = false;
+const unsigned long OCCUPANCY_HOLD_TIME = 180000; // 3 minutes in milliseconds
 
 void setup() {
   Serial.begin(115200);
@@ -45,56 +59,102 @@ void setup() {
 }
 
 void loop() {
-  timeClient.update();
-  if (millis() - lastUpdateMillis > 1000) { 
-    lastUpdateMillis = millis();
-
+  // Prevent timeClient from freezing the loop if NTP is blocked
+  static unsigned long lastNTP = 0;
+  if (millis() - lastNTP > 60000 || lastNTP == 0) {
+    timeClient.update();
+    lastNTP = millis();
+  }
+  
+  // ==========================================
+  // 1. CONTINUOUS FAST SENSING (Semi-Blocking)
+  // ==========================================
+  
+  // Catch any motion instantly before the window
+  if (digitalRead(pirPin) == HIGH) {
+    motionDetectedSinceLastPush = true;
+  }
+  
+  // B. Sample sound cleanly for 100ms (immune to other loop delays)
+  unsigned int sampleWindow = 100; 
+  unsigned int signalMax = 0, signalMin = 4095;
+  unsigned long start = millis();
+  
+  while (millis() - start < sampleWindow) {
+    int s = analogRead(soundPin);
+    if (s < 4095) {
+      if (s > signalMax) signalMax = s;
+      if (s < signalMin) signalMin = s;
+    }
+    // Also check PIR inside this loop so we never miss a quick movement
+    if (digitalRead(pirPin) == HIGH) {
+      motionDetectedSinceLastPush = true;
+    }
+  }
+  
+  // Map tiny analog peaks (150) to high dB values for extreme sensitivity
+  float dB = map(signalMax - signalMin, 0, 150, 40, 110);
+  if (dB < 40) dB = 40;
+  if (dB > 110) dB = 110; // Cap at 110dB so it doesn't overflow
+  
+  // Remember the loudest sound heard in this 3-second interval
+  if (dB > maxDbSinceLastPush) {
+    maxDbSinceLastPush = dB;
+  }
+  
+  // ==========================================
+  // 2. PERIODIC DATA PUSH (Every 3 seconds)
+  // ==========================================
+  if (millis() - lastNetworkPushMillis >= PUSH_INTERVAL) {
+    lastNetworkPushMillis = millis();
+    
+    // Read DHT11 (Slow sensor, takes ~250ms)
     float h = dht.readHumidity();
     float t = dht.readTemperature();
+    
+    // Read Light
     int ldr = analogRead(ldrPin);
-    int pir = digitalRead(pirPin);
-
-    // Sound Analysis
-    unsigned int sampleWindow = 50; 
-    unsigned int signalMax = 0, signalMin = 4095;
-    unsigned long start = millis();
-    while (millis() - start < sampleWindow) {
-      int s = analogRead(soundPin);
-      if (s < 4095) {
-        if (s > signalMax) signalMax = s;
-        else if (s < signalMin) signalMin = s;
+    bool lightOn = (ldr < 2000); 
+    
+    // --- HOLD TIMER LOGIC ---
+    bool isOcc = false;
+    
+    // 1. Check for fresh activity (using sensitive 60dB threshold)
+    if (motionDetectedSinceLastPush || maxDbSinceLastPush > 60) {
+      lastOccupancyTime = millis(); // Reset the 3-minute timer
+      hasStartedOccupancy = true;
+    }
+    
+    // 2. Room is occupied if the timer hasn't expired
+    if (hasStartedOccupancy) {
+      if (millis() - lastOccupancyTime < OCCUPANCY_HOLD_TIME) {
+        isOcc = true;
       }
     }
-    float dB = map(signalMax - signalMin, 0, 1000, 40, 95);
-    if (dB < 40) dB = 40;
-
-    bool isOcc = (pir == HIGH || dB > 75); 
-    bool lightOn = (ldr < 2000); 
 
     // --- Serial Monitor Preview ---
     Serial.print(timeClient.getFormattedTime()); 
     Serial.print(" -> ");
     Serial.print("Light("); Serial.print(lightOn ? "ON" : "OFF"); Serial.print(") , ");
-    Serial.print("PIR("); Serial.print(pir == HIGH ? "ON" : "OFF"); Serial.print(") , ");
-    Serial.print(dB, 1); Serial.print("dB , ");
+    Serial.print("PIR("); Serial.print(motionDetectedSinceLastPush ? "ON" : "OFF"); Serial.print(") , ");
+    Serial.print(maxDbSinceLastPush, 1); Serial.print("dB , ");
     Serial.print(t, 1); Serial.print("°C -> ");
     
     // --- Send to Next.js API ---
     if(WiFi.status() == WL_CONNECTED){
+      WiFiClient client;
       HTTPClient http;
       
-      http.begin(NEXTJS_SERVER_URL);
+      http.begin(client, NEXTJS_SERVER_URL);
       http.addHeader("Content-Type", "application/json");
+      http.setTimeout(15000); 
       
-      // Build JSON Payload
       StaticJsonDocument<256> doc;
       doc["room_id"] = TARGET_ROOM_ID;
-      
-      // DHT handles NaN sometimes
       if (isnan(t)) doc["temp"] = 0; else doc["temp"] = t; 
       if (isnan(h)) doc["humidity"] = 0; else doc["humidity"] = h;
       
-      doc["noise_level"] = dB;
+      doc["noise_level"] = maxDbSinceLastPush;
       doc["is_occupied"] = isOcc;
       doc["light_status"] = lightOn;
       
@@ -106,15 +166,21 @@ void loop() {
       if (httpResponseCode > 0) {
         Serial.print("Data pushed. API Code: ");
         Serial.println(httpResponseCode);
+        String response = http.getString(); // clear buffer completely
       } else {
         Serial.print("Failed to push. Error code: ");
         Serial.println(httpResponseCode);
       }
       
       http.end();
+      client.stop(); // Force socket to close properly
     } else {
       Serial.println("WiFi Disconnected! Please check connection.");
       WiFi.reconnect();
     }
+    
+    // --- Reset trackers for the next interval ---
+    motionDetectedSinceLastPush = false;
+    maxDbSinceLastPush = 40.0;
   }
 }

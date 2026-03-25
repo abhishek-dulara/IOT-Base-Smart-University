@@ -80,8 +80,21 @@ export async function getRoomStatus(room_id: string) {
     .from("room_status")
     .select("*")
     .eq("room_id", room_id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
-  return data;
+
+  // Return defaults when no status row exists yet (e.g. newly created room)
+  return data ?? {
+    room_id,
+    occupancy: null,
+    temperature_c: null,
+    light_lux: null,
+    noise_db: null,
+    ghost_cooling_active: null,
+    ghost_cooling_level: null,
+    ghost_cooling_reason: null,
+    updated_at: null,
+    last_reading_id: null,
+  };
 }
