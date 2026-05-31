@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token,
       user: {
         uid: user.uid,
@@ -60,6 +60,17 @@ export async function POST(req: Request) {
         role: user.role,
       },
     });
+
+    // Set httpOnly cookie so Next.js middleware can verify the session server-side
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 days — matches JWT expiry
+    });
+
+    return response;
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

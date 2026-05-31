@@ -3,16 +3,27 @@
 import Sidebar from "@/components/Sidebar";
 import TopNavbar from "@/components/TopNavbar";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Read initial state
+    // Client-side auth guard (defense-in-depth alongside middleware)
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+    setAuthChecked(true);
+
+    // Read initial sidebar state
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved === "true") setCollapsed(true);
 
@@ -22,7 +33,16 @@ export default function AppLayout({
     };
     window.addEventListener("sidebar-toggle", handler);
     return () => window.removeEventListener("sidebar-toggle", handler);
-  }, []);
+  }, [router]);
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="loading">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   return (
     <div className={`app-layout ${collapsed ? "sidebar-is-collapsed" : ""}`}>
@@ -34,3 +54,4 @@ export default function AppLayout({
     </div>
   );
 }
+

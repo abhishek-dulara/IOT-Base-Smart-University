@@ -4,13 +4,17 @@ import {
   updateBuilding,
   deleteBuilding,
 } from "@/lib/services/buildings";
+import { requireAuth } from "@/lib/authGuard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const building = await getBuildingById(id);
@@ -27,6 +31,9 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -41,9 +48,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     await deleteBuilding(id);

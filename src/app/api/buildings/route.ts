@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { getBuildings, createBuilding } from "@/lib/services/buildings";
+import { requireAuth } from "@/lib/authGuard";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const buildings = await getBuildings();
     return NextResponse.json(buildings);
@@ -16,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const building = await createBuilding(body);

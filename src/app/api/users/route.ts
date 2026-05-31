@@ -1,31 +1,12 @@
 import { NextResponse } from "next/server";
 import { getUsers } from "@/lib/services/users";
-import { verifyToken } from "@/lib/auth";
+import { requireRole } from "@/lib/authGuard";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase";
 
-function checkSuperAdmin(req: Request) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = verifyToken(token);
-    if (decoded.role !== "SUPER_ADMIN") {
-      return null;
-    }
-    return decoded;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(req: Request) {
-  const admin = checkSuperAdmin(req);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = requireRole(req, "SUPER_ADMIN");
+  if (!auth.ok) return auth.response;
 
   try {
     const users = await getUsers();
@@ -39,10 +20,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const admin = checkSuperAdmin(req);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = requireRole(req, "SUPER_ADMIN");
+  if (!auth.ok) return auth.response;
 
   try {
     const { name, email, password, role } = await req.json();

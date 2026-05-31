@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getReadings, createReading } from "@/lib/services/sensors";
+import { requireAuth } from "@/lib/authGuard";
 
 export async function GET(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(req.url);
     const room_id = searchParams.get("room_id") || undefined;
@@ -17,6 +21,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const reading = await createReading(body);

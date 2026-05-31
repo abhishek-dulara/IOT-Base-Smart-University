@@ -1,32 +1,13 @@
 import { NextResponse } from "next/server";
 import { getUserById, updateUser, deleteUser } from "@/lib/services/users";
-import { verifyToken } from "@/lib/auth";
-
-function checkSuperAdmin(req: Request) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
-  }
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = verifyToken(token);
-    if (decoded.role !== "SUPER_ADMIN") {
-      return null;
-    }
-    return decoded;
-  } catch {
-    return null;
-  }
-}
+import { requireRole } from "@/lib/authGuard";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = checkSuperAdmin(req);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = requireRole(req, "SUPER_ADMIN");
+  if (!auth.ok) return auth.response;
 
   try {
     const { id } = await params;
@@ -41,10 +22,8 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = checkSuperAdmin(req);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = requireRole(req, "SUPER_ADMIN");
+  if (!auth.ok) return auth.response;
 
   try {
     const { id } = await params;
@@ -69,13 +48,29 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const admin = checkSuperAdmin(req);
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = requireRole(req, "SUPER_ADMIN");
+  if (!auth.ok) return auth.response;
 
   try {
     const { id } = await params;
+
+    // Find the very first SUPER_ADMIN added to the system
+    const { supabase } = await import("@/lib/supabase");
+    const { data: firstSuperAdmin } = await supabase
+      .from("users")
+      .select("uid")
+      .eq("role", "SUPER_ADMIN")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (firstSuperAdmin && firstSuperAdmin.uid === id) {
+      return NextResponse.json(
+        { error: "The original super admin account cannot be deleted." },
+        { status: 403 }
+      );
+    }
+
     await deleteUser(id);
     return NextResponse.json({ success: true, message: "User deleted" });
   } catch (error: any) {

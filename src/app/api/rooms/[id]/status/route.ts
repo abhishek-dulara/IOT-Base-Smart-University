@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getRoomStatus } from "@/lib/services/rooms";
+import { requireAuth } from "@/lib/authGuard";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await params;
     const status = await getRoomStatus(id);

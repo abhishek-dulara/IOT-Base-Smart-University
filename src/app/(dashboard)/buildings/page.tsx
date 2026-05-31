@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 interface Building {
   building_id: string;
@@ -14,6 +15,7 @@ interface Building {
 }
 
 export default function BuildingsPage() {
+  const router = useRouter();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +24,11 @@ export default function BuildingsPage() {
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [formData, setFormData] = useState({ building_id: "", name: "", address: "", number_of_floors: 0, number_of_rooms: 0 });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Rooms Modal State
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+  const [roomsList, setRoomsList] = useState<any[]>([]);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
 
   const fetchBuildings = useCallback(async () => {
     try {
@@ -84,7 +91,8 @@ export default function BuildingsPage() {
   };
 
   // Handle Delete
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!window.confirm(`Are you sure you want to delete ${name || "this building"}? This will permanently delete its floors and rooms.`)) return;
     
     try {
@@ -113,10 +121,28 @@ export default function BuildingsPage() {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (b: Building) => {
+  const openEditModal = (b: Building, e: React.MouseEvent) => {
+    e.stopPropagation();
     setFormData({ building_id: b.building_id, name: b.name, address: b.address, number_of_floors: b.number_of_floors || 0, number_of_rooms: b.number_of_rooms || 0 });
     setModalMode("edit");
     setIsModalOpen(true);
+  };
+
+  const handleBuildingClick = async (b: Building) => {
+    setSelectedBuilding(b);
+    setIsLoadingRooms(true);
+    setRoomsList([]);
+    try {
+      const token = localStorage.getItem("token");
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/api/rooms?building_id=${b.building_id}`, { headers });
+      const data = await res.json();
+      if (Array.isArray(data)) setRoomsList(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingRooms(false);
+    }
   };
 
   if (loading) {
@@ -152,19 +178,24 @@ export default function BuildingsPage() {
       ) : (
         <div className="card-grid">
           {buildings.map((b) => (
-            <div key={b.building_id} className="card animate-in relative group" style={{ position: 'relative' }}>
+            <div 
+              key={b.building_id} 
+              className="card animate-in relative group" 
+              style={{ position: 'relative', cursor: 'pointer' }}
+              onClick={() => handleBuildingClick(b)}
+            >
               
               {/* Action Buttons (Edit/Delete) */}
               <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 8 }}>
                 <button 
-                  onClick={() => openEditModal(b)}
+                  onClick={(e) => openEditModal(b, e)}
                   className="action-btn edit-btn"
                   title="Edit"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
                 <button 
-                  onClick={() => handleDelete(b.building_id, b.name)}
+                  onClick={(e) => handleDelete(b.building_id, b.name, e)}
                   className="action-btn delete-btn"
                   title="Delete"
                 >
@@ -298,6 +329,72 @@ export default function BuildingsPage() {
           </div>
         </div>
       )}
+
+      {/* Rooms List Modal */}
+      {selectedBuilding && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)'
+        }} onClick={() => setSelectedBuilding(null)}>
+          <div 
+            className="card animate-in" 
+            style={{ width: '100%', maxWidth: '500px', height: '500px', margin: '20px', zIndex: 101, display: 'flex', flexDirection: 'column' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexShrink: 0 }}>
+              <div>
+                <h3 style={{ fontSize: 20, fontWeight: 700 }}>{selectedBuilding.name} - Rooms</h3>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedBuilding.address}</p>
+              </div>
+              <button 
+                className="action-btn" 
+                onClick={() => setSelectedBuilding(null)} 
+                title="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: 4 }}>
+              {isLoadingRooms ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>Loading rooms...</div>
+              ) : roomsList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)' }}>
+                  No rooms found in this building.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {roomsList.map(room => (
+                    <div key={room.room_id} style={{ 
+                      padding: '12px 16px', 
+                      background: 'rgba(255,255,255,0.03)', 
+                      borderRadius: 8,
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{room.name}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Room: {room.room_number || 'N/A'}</div>
+                      </div>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '13px' }}
+                        onClick={() => router.push(`/rooms/${room.room_id}`)}
+                      >
+                        View Room
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .action-btn { background: transparent; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 6px; }
         .action-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }

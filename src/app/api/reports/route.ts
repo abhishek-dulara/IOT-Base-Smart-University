@@ -1,52 +1,245 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/authGuard";
 
 export async function GET(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(req.url);
     const format = searchParams.get("format") || "json";
+    const category = searchParams.get("category") || "all"; // all, buildings, rooms, alerts, sensors
+    const buildingId = searchParams.get("building_id") || null;
+    const roomType = searchParams.get("room_type") || null; // HALL, LAB, OFFICE
+    const timeRange = searchParams.get("range") || "all"; // 24h, 7d, 30d, all
 
-    // 1. Fetch data for the report
-    const [buildingsRes, roomsRes, anomaliesRes] = await Promise.all([
-      supabase.from("buildings").select("*, floors(count), rooms(count)"),
-      supabase.from("rooms").select("*, room_status(*)"),
-      supabase.from("anomalies").select("*").eq("is_active", true),
-    ]);
+    // Compute time filter
+    let timeFilter: string | null = null;
+    if (timeRange !== "all") {
+      let hoursAgo = 24;
+      if (timeRange === "7d") hoursAgo = 24 * 7;
+      if (timeRange === "30d") hoursAgo = 24 * 30;
+      timeFilter = new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
+    }
 
-    if (buildingsRes.error) throw buildingsRes.error;
-    if (roomsRes.error) throw roomsRes.error;
-    if (anomaliesRes.error) throw anomaliesRes.error;
+    let buildings: any[] | null = null;
+    let rooms: any[] | null = null;
+    let alerts: any[] | null = null;
+    let sensors: any[] | null = null;
+    let readings: any[] | null = null;
 
-    const reportData = {
+    // ----- BUILDINGS REPORT -----
+    if (category === "buildings" || category === "all") {
+      let buildingsQuery = supabase
+        .from("buildings")
+        .select("*, floors(floor_id, level, name), rooms(room_id, name, code, type)");
+      if (buildingId) buildingsQuery = buildingsQuery.eq("building_id", buildingId);
+      const { data, error } = await buildingsQuery;
+      if (error) throw error;
+      buildings = data;
+    }
+
+    // ----- ROOMS REPORT -----
+    if (category === "rooms" || category === "all") {
+      let roomsQuery = supabase
+        .from("rooms")
+        .select("*, room_status(*), sensor_nodes(node_id, device_name, is_active, last_seen_at)");
+      if (buildingId) roomsQuery = roomsQuery.eq("building_id", buildingId);
+      if (roomType) roomsQuery = roomsQuery.eq("type", roomType);
+      const { data, error } = await roomsQuery;
+      if (error) throw error;
+      rooms = data;
+    }
+
+    // ----- ALERTS REPORT -----
+    if (category === "alerts" || category === "all") {
+      let alertsQuery = supabase
+        .from("anomalies")
+        .select("*, rooms(name, code)")
+        .order("start_at", { ascending: false });
+      if (buildingId) {
+        const { data: buildingRooms } = await supabase
+          .from("rooms")
+          .select("room_id")
+          .eq("building_id", buildingId);
+        if (buildingRooms && buildingRooms.length > 0) {
+          alertsQuery = alertsQuery.in("room_id", buildingRooms.map(r => r.room_id));
+        }
+      }
+      if (timeFilter) alertsQuery = alertsQuery.gte("start_at", timeFilter);
+      const { data, error } = await alertsQuery;
+      if (error) throw error;
+      alerts = data;
+    }
+
+    // ----- SENSORS REPORT -----
+    if (category === "sensors" || category === "all") {
+      const sensorsQuery = supabase
+        .from("sensor_nodes")
+        .select("*, rooms(name, code, building_id)");
+      const { data, error } = await sensorsQuery;
+      if (error) throw error;
+      sensors = data;
+
+      // Filter sensors by building if needed
+      if (buildingId && sensors) {
+        sensors = sensors.filter((s: any) => s.rooms?.building_id === buildingId);
+      }
+    }
+
+    // ----- READINGS SUMMARY -----
+    if (category === "rooms" || category === "all") {
+      let readingsQuery = supabase
+        .from("readings")
+        .select("room_id, temperature_c, occupancy_detected, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5000);
+      if (timeFilter) readingsQuery = readingsQuery.gte("created_at", timeFilter);
+      const { data, error } = await readingsQuery;
+      if (error) throw error;
+      readings = data;
+    }
+
+    // Build the report data object
+    const reportData: any = {
       generatedAt: new Date().toISOString(),
-      buildings: buildingsRes.data,
-      rooms: roomsRes.data,
-      activeAnomalies: anomaliesRes.data,
+      filters: { category, buildingId, roomType, timeRange },
     };
 
-    if (format === "csv") {
-      // Basic CSV generation for rooms
-      let csv = "Room Name,Room Code,Building ID,Type,Occupied,Temperature,Ghost Cooling Active\n";
-      roomsRes.data.forEach((r) => {
-        const status = r.room_status?.[0] || {};
-        const line = [
-          `"${r.name || ""}"`,
-          `"${r.code || ""}"`,
-          r.building_id,
-          r.type,
-          status.occupancy === "OCCUPIED" ? "Yes" : "No",
-          status.temperature_c ?? "",
-          status.ghost_cooling_active ? "Yes" : "No"
-        ].join(",");
-        csv += line + "\n";
+    if (buildings) reportData.buildings = buildings;
+    if (rooms) reportData.rooms = rooms;
+    if (alerts) reportData.alerts = alerts;
+    if (sensors) reportData.sensors = sensors;
+
+    // Room-level aggregations (for rooms report)
+    if (rooms && readings) {
+      const roomAggregations: Record<string, any> = {};
+      readings.forEach((r: any) => {
+        if (!r.room_id) return;
+        if (!roomAggregations[r.room_id]) {
+          roomAggregations[r.room_id] = {
+            totalReadings: 0,
+            totalTemp: 0,
+            tempCount: 0,
+            occupiedCount: 0,
+            totalOccupancy: 0,
+          };
+        }
+        const agg = roomAggregations[r.room_id];
+        agg.totalReadings++;
+        if (typeof r.temperature_c === "number") {
+          agg.totalTemp += r.temperature_c;
+          agg.tempCount++;
+        }
+        if (r.occupancy_detected !== null) {
+          if (r.occupancy_detected) agg.occupiedCount++;
+          agg.totalOccupancy++;
+        }
       });
 
-      return new NextResponse(csv, {
-        headers: {
-          "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="navsense-rooms-report-${new Date().toISOString().split('T')[0]}.csv"`,
-        },
+      // Attach aggregations to rooms
+      reportData.rooms = rooms.map((room: any) => {
+        const agg = roomAggregations[room.room_id];
+        return {
+          ...room,
+          stats: agg
+            ? {
+                totalReadings: agg.totalReadings,
+                avgTemperature: agg.tempCount > 0 ? +(agg.totalTemp / agg.tempCount).toFixed(1) : null,
+                occupancyRate: agg.totalOccupancy > 0 ? +((agg.occupiedCount / agg.totalOccupancy) * 100).toFixed(1) : null,
+              }
+            : { totalReadings: 0, avgTemperature: null, occupancyRate: null },
+        };
       });
+    }
+
+    // ----- CSV FORMAT -----
+    if (format === "csv") {
+      const date = new Date().toISOString().split("T")[0];
+
+      if (category === "buildings" && buildings) {
+        let csv = "Building Name,Address,Floors,Rooms,Created At\n";
+        buildings.forEach((b: any) => {
+          csv += [
+            `"${b.name || ""}"`,
+            `"${b.address || ""}"`,
+            b.floors?.length || 0,
+            b.rooms?.length || 0,
+            b.created_at || "",
+          ].join(",") + "\n";
+        });
+        return csvResponse(csv, `navsense-buildings-report-${date}.csv`);
+      }
+
+      if (category === "rooms" && reportData.rooms) {
+        let csv = "Room Name,Room Code,Type,Building ID,Occupied,Temperature (°C),Avg Temp,Occupancy Rate (%),Total Readings,Ghost Cooling,Sensors Count\n";
+        reportData.rooms.forEach((r: any) => {
+          const status = r.room_status?.[0] || {};
+          csv += [
+            `"${r.name || ""}"`,
+            `"${r.code || ""}"`,
+            r.type || "",
+            r.building_id || "",
+            status.occupancy === "OCCUPIED" ? "Yes" : "No",
+            status.temperature_c ?? "",
+            r.stats?.avgTemperature ?? "",
+            r.stats?.occupancyRate ?? "",
+            r.stats?.totalReadings ?? 0,
+            status.ghost_cooling_active ? "Yes" : "No",
+            r.sensor_nodes?.length || 0,
+          ].join(",") + "\n";
+        });
+        return csvResponse(csv, `navsense-rooms-report-${date}.csv`);
+      }
+
+      if (category === "alerts" && alerts) {
+        let csv = "Type,Severity,Room,Message,Active,Started At,Ended At\n";
+        alerts.forEach((a: any) => {
+          csv += [
+            a.type || "",
+            a.severity || "",
+            `"${a.rooms?.name || ""}"`,
+            `"${(a.message || "").replace(/"/g, '""')}"`,
+            a.is_active ? "Active" : "Resolved",
+            a.start_at || "",
+            a.end_at || "",
+          ].join(",") + "\n";
+        });
+        return csvResponse(csv, `navsense-alerts-report-${date}.csv`);
+      }
+
+      if (category === "sensors" && sensors) {
+        let csv = "Node ID,Device Name,Room,Active,Firmware,WiFi MAC,Last Seen\n";
+        sensors.forEach((s: any) => {
+          csv += [
+            s.node_id || "",
+            `"${s.device_name || ""}"`,
+            `"${s.rooms?.name || ""}"`,
+            s.is_active ? "Yes" : "No",
+            s.firmware_version || "",
+            s.wifi_mac || "",
+            s.last_seen_at || "",
+          ].join(",") + "\n";
+        });
+        return csvResponse(csv, `navsense-sensors-report-${date}.csv`);
+      }
+
+      // "all" category — comprehensive rooms CSV (backward compatible)
+      let csv = "Room Name,Room Code,Type,Building ID,Occupied,Temperature,Ghost Cooling Active\n";
+      (reportData.rooms || []).forEach((r: any) => {
+        const status = r.room_status?.[0] || {};
+        csv += [
+          `"${r.name || ""}"`,
+          `"${r.code || ""}"`,
+          r.type || "",
+          r.building_id,
+          status.occupancy === "OCCUPIED" ? "Yes" : "No",
+          status.temperature_c ?? "",
+          status.ghost_cooling_active ? "Yes" : "No",
+        ].join(",") + "\n";
+      });
+      return csvResponse(csv, `navsense-full-report-${date}.csv`);
     }
 
     // Default JSON
@@ -58,4 +251,13 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+function csvResponse(csv: string, filename: string) {
+  return new NextResponse(csv, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
 }

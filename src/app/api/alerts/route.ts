@@ -3,8 +3,12 @@ import {
   getActiveAnomalies,
   createAnomaly,
 } from "@/lib/services/alerts";
+import { requireAuth } from "@/lib/authGuard";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const anomalies = await getActiveAnomalies();
     return NextResponse.json(anomalies);
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await req.json();
     const anomaly = await createAnomaly(body);

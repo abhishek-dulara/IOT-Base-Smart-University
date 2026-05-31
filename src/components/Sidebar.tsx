@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -41,8 +42,19 @@ export default function Sidebar() {
     window.dispatchEvent(new CustomEvent("sidebar-toggle", { detail: next }));
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Even if the API call fails, clear client-side state
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.replace("/login");
+  };
+
   const filteredNav = navItems.filter((item) => 
-    !("superAdminOnly" in item) || (item as any).superAdminOnly === false || role === "SUPER_ADMIN"
+    !(("superAdminOnly" in item) && (item as any).superAdminOnly === true) || role === "SUPER_ADMIN"
   );
 
   return (
@@ -91,6 +103,18 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
+
+      {/* Logout Button */}
+      <div className="sidebar-footer">
+        <button
+          className="sidebar-link sidebar-logout-btn"
+          onClick={handleLogout}
+          title={collapsed ? "Logout" : undefined}
+        >
+          <span className="sidebar-link-icon">🚪</span>
+          {!collapsed && "Logout"}
+        </button>
+      </div>
     </aside>
   );
 }
