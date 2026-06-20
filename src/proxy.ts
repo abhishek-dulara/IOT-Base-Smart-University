@@ -5,8 +5,11 @@ import { jwtVerify } from "jose";
 // Routes that don't require authentication
 const PUBLIC_PATHS = [
   "/login",
+  "/reset-password",
   "/api/auth/login",
   "/api/auth/logout",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
   "/api/sensor_readings", // ESP32 IoT endpoint — intentionally open
 ];
 
