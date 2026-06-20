@@ -51,8 +51,9 @@ Built natively on the **Next.js 16 App Router**, **React 19**, and **Supabase**,
 | 🌡️ **Environmental Analytics** | Deep insights into building environments affecting comfort and energy usage |
 | 🚨 **Automated Alerting** | Configurable anomaly detection (Ghost Cooling, Extreme Temps) with severity-based notifications |
 | 🏛️ **Multi-Building Management** | Full CRUD operations designed to scale across complex university campuses |
-| 🔐 **Role-Based Access Control** | Super Admin and Admin roles with stateless JWT authentication |
-| 📊 **Report Generation** | Comprehensive, downloadable timeline metric exports |
+| 🔐 **Role-Based Access Control** | Super Admin and Admin roles with stateless JWT authentication, plus root account protection |
+| 📧 **Password Recovery** | Secure forgot password and reset workflows powered by Nodemailer |
+| 📊 **Report Generation** | Comprehensive, downloadable CSV timeline exports for rooms, sensors, and alerts |
 | 🎨 **Striking UI/UX** | Custom glassmorphism components, 3D CSS flip animations, and glowing interactive states |
 
 ---
@@ -66,7 +67,7 @@ Built natively on the **Next.js 16 App Router**, **React 19**, and **Supabase**,
 | **Styling** | Standard CSS (Globals) | 3D animations, gradients, glassmorphism — no Tailwind needed |
 | **Database** | Supabase (PostgreSQL) | Primary data store, Realtime APIs, Row-Level Security |
 | **Edge Functions** | Deno (via Supabase) | Serverless IoT simulator and sensor data ingestion |
-| **Auth** | Bcrypt.js + JWT | Custom stateless authentication and password hashing |
+| **Auth & Email** | Bcrypt.js, JWT, Nodemailer | Custom stateless authentication, password hashing, and secure email recovery |
 | **Charts** | Recharts | Dynamic, animated sensor data visualizations |
 
 ---
@@ -140,6 +141,7 @@ NavSense runs on a clean **3-tier architecture**:
 | Page | Route | Description |
 |---|---|---|
 | Login | `/login` | 3D flip-card authentication interface |
+| Reset Password | `/reset-password` | Secure account recovery and password reset |
 | Dashboard | `/dashboard` | System overview, ambient KPIs, fast metrics |
 | Buildings | `/buildings` | Building & infrastructure CRUD |
 | Rooms | `/rooms` | Room definitions and sensor node mapping |
@@ -176,6 +178,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=super_secret_navsense_smart_university_key_2026_xyz
+
+# Nodemailer configuration for Password Recovery emails
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_specific_password
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 > ⚠️ **Never commit `.env.local` or expose your `SUPABASE_SERVICE_ROLE_KEY` publicly.**
@@ -188,29 +195,29 @@ JWT_SECRET=super_secret_navsense_smart_university_key_2026_xyz
 
 ### 4. Create Demo Users
 
-Because NavSense uses Bcrypt hashing, accounts must be created via the API. Start the dev server first, then run:
+Recent security updates require a `SUPER_ADMIN` token to hit the `/api/auth/register` endpoint. Therefore, the very first root user must be inserted directly into the database. 
 
-**macOS / Linux:**
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"super@navsense.io","password":"SuperAdmin123!","name":"Super Admin","role":"SUPER_ADMIN"}'
+1. Open your **Supabase Dashboard → SQL Editor**
+2. Run the following SQL to create your root Super Admin (Email: `super@navsense.io`, Password: `SuperAdmin123!`):
 
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@navsense.io","password":"Admin1234!","name":"Admin","role":"ADMIN"}'
+```sql
+INSERT INTO users (name, email, password_hash, role)
+VALUES (
+  'Super Admin', 
+  'super@navsense.io', 
+  '$2b$12$kKzTFMU9vZmf2bJ4is5c9O/YJo6ALV9lx7XEpuRT17nu8zy2X0RKG', 
+  'SUPER_ADMIN'
+);
 ```
 
-**Windows (PowerShell):**
-```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post `
-  -ContentType "application/json" `
-  -Body '{"email":"super@navsense.io","password":"SuperAdmin123!","name":"Super Admin","role":"SUPER_ADMIN"}'
+> 💡 **Tip: Custom Passwords**
+> If you want to use a different password, you can generate your own bcrypt hash (cost: 12) by running this in your terminal:
+> ```bash
+> node -e "console.log(require('bcryptjs').hashSync('YourCustomPassword!', 12))"
+> ```
+> Then substitute the resulting hash into the SQL command above.
 
-Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method Post `
-  -ContentType "application/json" `
-  -Body '{"email":"admin@navsense.io","password":"Admin1234!","name":"Admin","role":"ADMIN"}'
-```
+3. Once logged in as `super@navsense.io` in the app, you can create additional accounts through the NavSense User Management UI, or use the API with your Bearer token.
 
 ### 5. Start the Development Server
 
